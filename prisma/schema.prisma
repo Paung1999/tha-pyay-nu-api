@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+enum OrderStatus {
+  CREATED
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id  Int @id @default(autoincrement())
+  name String
+  email String @unique
+  password String
+  role Role @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  addresses Address[]
+  orders Order[]
+}
+
+model Address {
+  id Int @id @default(autoincrement())
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  label String
+  addressField String
+  isDefault Boolean @default(false)
+}
+
+model Book{
+  id Int @id @default(autoincrement())
+  title String
+  author String
+  description String
+  isbn String? @unique
+  language String
+  coverImage String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sellBook Sell_Book[]
+  genres Genre[]
+}
+
+model Genre{
+  id Int @id @default(autoincrement())
+  name String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  books Book[]
+
+}
+
+model Sell_Book{
+  id Int @id @default(autoincrement())
+  book Book @relation(fields: [bookId], references: [id])
+  bookId Int
+  price Int
+  currency String
+  stockQuantity Int
+  isActive Boolean
+  condition String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sellBooks OrderItem[]
+
+}
+
+model Order{
+  id Int @id @default(autoincrement())
+  orderNumber String @unique
+  status OrderStatus @default(CREATED)
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  subtotal Int
+  deliveryFee Int
+  total Int
+  shippingAddressSnapshot Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orderItems OrderItem[]
+  payment Payment[]
+
+}
+
+model OrderItem{
+  id Int @id @default(autoincrement())
+  order Order @relation(fields: [orderId], references: [id])
+  orderId Int
+  sellBook Sell_Book @relation(fields: [sellBookId], references: [id])
+  sellBookId Int
+  quantity Int
+  unitPriceSnapshot Int
+  titleSnapshot String
+}
+
+model Payment{
+  id Int @id @default(autoincrement())
+  order Order @relation(fields: [orderId], references: [id])
+  orderId Int @unique
+  status PaymentStatus @default(PENDING)
+  amount Int
+  provider String
+  transactionId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
