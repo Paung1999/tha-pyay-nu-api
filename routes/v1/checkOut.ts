@@ -96,6 +96,7 @@ checkOutRouter.post("/checkout", async (req, res) => {
   }
 });
 
+//Getting client's orders
 checkOutRouter.get("/", async (req, res) => {
   try {
     const { id: userId } = res.locals.user;
@@ -115,12 +116,19 @@ checkOutRouter.get("/", async (req, res) => {
   }
 });
 
+
+//Getting client's specific order detail
 checkOutRouter.get("/:orderNumber", async(req ,res )=>{
   try{
     const {orderNumber} = req.params;
+    const {id: userId} = res.locals.user;
+    if(!orderNumber){
+      return res.status(400).json({msg: "Order number is required"});
+    }
     const order = await prisma.order.findUnique({
       where: {
-        orderNumber: orderNumber
+        orderNumber: orderNumber,
+        userId: Number(userId)
       },
       include: {
         orderItems: {
@@ -135,9 +143,14 @@ checkOutRouter.get("/:orderNumber", async(req ,res )=>{
       }
     
     });
+    if(userId !== order?.userId){
+      return res.status(403).json({msg: "You are not authorized to view this order"});
+    }
+
     if(!order){
       return res.status(404).json({msg: "Order not found"});
     }
+    
     res.json(order);
     console.log("Order Data:", order);
 

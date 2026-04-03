@@ -1,11 +1,28 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { email, z } from "zod";
 
 import {prisma} from "../../lib/prisma";
 import {auth} from "../../middlewares/auth";
 
 const userRouter = Router();
+
+const registerSchma = z.object({
+    name: z.string().min(3, "Name must be at least 3 characters long").max(50, "Name must be at most 50 characters long"),
+    email: z.string().email("Invalid email"),
+    password: z.string().min(6, "Password must be at least 6 characters long"),
+    confirmPassword: z.string() 
+}).refine((data)=> data.password === data.confirmPassword, {
+    message: "Password doesn't match",
+    path: ["confirmPassword"]
+
+});
+
+const loginSchema = z.object({
+    email: z.string().email("Invalid email"),
+    password: z.string().min(1, "Password is required")
+});
 
 userRouter.get("/verify",auth, async(req ,res)=> {
     try{
@@ -31,21 +48,11 @@ userRouter.get("/verify",auth, async(req ,res)=> {
 
 userRouter.post("/register", async(req , res )=> {
     try{
-        const name = req.body?.name;
-        const email = req.body?.email;
-        const password = req.body?.password;
-        const confirmPassword = req.body?.confirmPassword;
-        if(!name || !email || !password || !confirmPassword){
-            return res.status(400).json({msg: "All fields are required"})
-        }
-
-        if(password !== confirmPassword){
-            return res.status(400).json({msg: "Password doesn't match"})
-        }
+        const validatedData = registerSchma.parse(req.body);
 
         const existingUser = await prisma.user.findUnique({
             where: {
-                email: email
+                email: validatedData.email
             }
         });
         if(existingUser){
@@ -55,9 +62,9 @@ userRouter.post("/register", async(req , res )=> {
 
         const user = await prisma.user.create({
             data: {
-                name: name,
-                email: email,
-                password: await bcrypt.hash(password,10)
+                name: validatedData.name,
+                email: validatedData.email,
+                password: await bcrypt.hash(validatedData.password,10)
             }
         });
         res.status(201).json(user);
@@ -70,17 +77,11 @@ userRouter.post("/register", async(req , res )=> {
 
 userRouter.post("/login", async(req , res)=> {
     try{
-        const email = req.body?.email;
-        const password = req.body?.password;
-
-        if(!email || !password){
-            return res.status(400).json({msg: "All fields are required"})
-
-        }
+        const validatedData = loginSchema.parse(req.body);
 
         const user = await prisma.user.findUnique({
             where: {
-                email: email
+                email: validatedData.email
             },
             select: {
                 id: true,
@@ -93,7 +94,7 @@ userRouter.post("/login", async(req , res)=> {
         });
 
         if(user){
-            if(await bcrypt.compare(password, user.password)){
+            if(await bcrypt.compare(validatedData.password, user.password)){
                 const token = jwt.sign({
                     id: user.id,
                     name: user.name,
