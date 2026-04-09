@@ -30,6 +30,11 @@ checkOutRouter.post("/checkout", async (req, res) => {
       const orderItemsData = [];
 
       for (const reqItem of items) {
+
+        if(!reqItem.quantity || reqItem.quantity <= 0){
+          return res.status(400).json({msg: "Quantity must be greater than 0"});
+        }
+
         const dbBook = sellBooks.find((b) => b.id == reqItem.sellBookId);
 
         if (!dbBook || !dbBook.isActive) {

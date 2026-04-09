@@ -111,7 +111,8 @@ bookRouter.get("/", async (req , res )=> {
                         genres: true
                     }
                 }
-            }
+            },
+            take: 20
         });
         res.json(listings);
 
