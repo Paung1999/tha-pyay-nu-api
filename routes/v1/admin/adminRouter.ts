@@ -101,7 +101,10 @@ adminRouter.get("/books/search", auth, checkRole('ADMIN'), async(req ,res)=>{
       }
 
       });
-      res.json(searchedResult);
+      res.json({
+        message: 'Searched book retrieved!',
+        data: searchedResult
+      });
 
   }catch(err){
     console.log(err);
@@ -111,8 +114,15 @@ adminRouter.get("/books/search", auth, checkRole('ADMIN'), async(req ,res)=>{
 
 adminRouter.get("/books",auth, checkRole("ADMIN"), async (req, res) => {
   try {
-    const books = await prisma.book.findMany();
-    res.json(books);
+    const books = await prisma.book.findMany({
+      include: {
+        genres: true
+      }
+    });
+    res.json({
+      message: 'All inventory books retrieved',
+      data: books
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Something went wrong" });
@@ -209,7 +219,10 @@ adminRouter.post("/books", auth, checkRole("ADMIN"), upload.single("coverImage")
           genres: true,
         },
       });
-      res.status(201).json(book);
+      res.status(201).json({
+        message: 'New book created successfully',
+        data: book
+      });
     }
   } catch (err) {
     console.log(err);
@@ -293,7 +306,10 @@ adminRouter.put("/books/:id",auth, checkRole("ADMIN"),upload.single("coverImage"
       },
     });
 
-    res.json(updatedBook);
+    res.json({
+      message: 'Book updated successfully',
+      data: updatedBook
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Something went wrong" });

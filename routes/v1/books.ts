@@ -37,7 +37,10 @@ bookRouter.get("/search" , async(req ,res)=> {
                 }
             }
         });
-        res.json(searchResults);
+        res.json({
+            message: 'Search result returned',
+            data: searchResults
+        });
 
 
     }catch(err){
@@ -49,7 +52,10 @@ bookRouter.get("/search" , async(req ,res)=> {
 bookRouter.get("/genres", async(req ,res)=> {
     try{
         const genres = await prisma.genre.findMany();
-        res.json(genres);
+        res.json({
+            message: 'genres returned',
+            data: genres
+        });
 
 
     }catch(err){
@@ -89,7 +95,10 @@ bookRouter.get("/genres/:genreId", async(req ,res )=> {
                 createdAt: "desc"
             }
         });
-        res.json(genreListings);
+        res.json({
+            message: 'genre listing return ',
+            data: genreListings
+        });
 
         
     }catch(err){
@@ -114,7 +123,10 @@ bookRouter.get("/", async (req , res )=> {
             },
             take: 20
         });
-        res.json(listings);
+        res.json({
+            message: 'listed books return',
+            data: listings
+        });
 
     }catch(err){
         console.log(err)
@@ -142,7 +154,10 @@ bookRouter.get("/:id", async (req ,res)=> {
         if(!listing){
             return res.status(404).json({msg: "Book not found"});
         }
-        res.json(listing);
+        res.json({
+            message: 'Book returned by id',
+            data: listing
+        });
 
 
     }catch(err){

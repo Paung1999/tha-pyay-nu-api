@@ -6,7 +6,10 @@ const genreRouter = Router();
 genreRouter.get("/", async(req , res)=>{
     try{
         const genres = await prisma.genre.findMany();
-        res.json(genres);
+        res.json({
+            message: 'All genres retrieved',
+            data: genres
+        });
 
     }catch(err){
         console.log(err);
@@ -47,7 +50,10 @@ genreRouter.post("/", async(req ,res)=> {
                 name: name
             }
         });
-        res.status(201).json(genre);
+        res.status(201).json({
+            message: 'Save genre successfully',
+            data: genre
+        });
 
 
     }catch(err){
@@ -90,10 +96,10 @@ genreRouter.delete("/:id" , async(req ,res)=> {
             return res.status(400).json({msg: "ID is required"});
 
         }
-        await prisma.genre.delete({
+        const deletedGenre = await prisma.genre.delete({
             where: {id: Number(id)}
         });
-        res.json({msg: "Genre deleted successfully"});
+        res.json({msg: "Genre deleted successfully", data: deletedGenre});
 
 
     }catch(err){
