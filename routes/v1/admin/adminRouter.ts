@@ -6,6 +6,7 @@ import { upload } from "../../../middlewares/multer";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { title } from "node:process";
+import { Role } from "../../../generated/prisma/enums";
 
 
 
@@ -60,16 +61,33 @@ adminRouter.post("/login", async(req , res)=> {
       if(user.role !== "ADMIN"){
         return res.status(400).json({msg: "Invalid credentials"})
       }
+
       if(await bcrypt.compare(password, user.password)){
         const token = jwt.sign({
           id: user.id,
-          name: user.name,
-          email: user.email,
           role: user.role
         },process.env.JWT_SECRET as string, {
           expiresIn: "2hr"
         });
-        return res.json({user, token})
+
+        res.cookie('token', token,{
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === "production",
+          maxAge:  60 * 60 * 1000, 
+        });
+
+        const safeUser = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+
+        return res.status(200).json({
+          messsage: 'Admin login successfully',
+          user: safeUser
+        })
       
       }
     }

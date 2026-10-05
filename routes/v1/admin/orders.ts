@@ -26,7 +26,10 @@ adminOrderRoute.get("/", async(req , res)=> {
             },
             take: 10
         });
-        res.json(orders);
+        res.json({
+            message: 'ALl orders retrieved successfully',
+            data: orders
+        });
 
 
     }catch(err){
@@ -47,7 +50,10 @@ adminOrderRoute.put("/:id/status", async(req ,res)=> {
             where: {id: Number(id)},
             data: {status: status}
         });
-        res.json(updatedOrder);
+        res.json({
+            message: 'Order updated successfully',
+            data: updatedOrder
+        });
 
 
     }catch(err){

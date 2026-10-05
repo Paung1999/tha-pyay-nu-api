@@ -30,7 +30,10 @@ sellBookRouter.get("/search", async(req , res)=> {
                 }
             }
         });
-        res.json(searchedResult);
+        return res.status(200).json({
+            message: 'Searched book retrieved',
+            data: searchedResult
+        })
 
     }catch(err){
         console.log(err);
@@ -67,7 +70,10 @@ sellBookRouter.post("/", async(req , res)=> {
                 isActive: true
             }
         });
-        res.status(201).json(book);
+        res.status(201).json({
+            message: 'Listed book successfully',
+            data: book
+        });
 
 
     }catch(err){
@@ -85,7 +91,10 @@ sellBookRouter.get("/", async(req , res)=> {
 
             }
         });
-        res.json(inventory);
+        return res.status(200).json({
+            message: 'All listing books retrieved',
+            data: inventory
+        });
 
 
     }catch(err){
@@ -110,7 +119,10 @@ sellBookRouter.get("/:id", async(req ,res)=> {
         if(!book){
             return res.status(404).json({msg: "Book not found"});
         }
-        res.json(book);
+        return res.status(200).json({
+            message: 'sell book by id',
+            data: book
+        })
 
     }catch(err){
         console.log(err);
@@ -143,11 +155,14 @@ sellBookRouter.put("/:id", async(req , res)=> {
                 currency: currency,
                 stockQuantity: Number(stockQuantity),
                 condition: condition,
-                isActive: isActive || true
+                isActive:  isActive ?? book.isActive,
             }
                 
         });
-        res.json(updatedBook);
+        return res.status(201).json({
+            message: 'Listed book updated successfully',
+            data: updatedBook
+        })
 
 
     }catch(err){

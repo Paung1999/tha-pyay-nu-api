@@ -4,6 +4,12 @@ import { auth } from "../../middlewares/auth";
 
 const checkOutRouter = Router();
 
+class HttpError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
+
 checkOutRouter.post("/checkout", async (req, res) => {
   try {
     const { items, shippingAddress } = req.body;
@@ -32,18 +38,16 @@ checkOutRouter.post("/checkout", async (req, res) => {
       for (const reqItem of items) {
 
         if(!reqItem.quantity || reqItem.quantity <= 0){
-          return res.status(400).json({msg: "Quantity must be greater than 0"});
+         throw new HttpError(400, "Quantity must be greater than 0");
         }
 
         const dbBook = sellBooks.find((b) => b.id == reqItem.sellBookId);
 
         if (!dbBook || !dbBook.isActive) {
-          return res.status(400).json({ msg: "Book not found or not active" });
+          throw new HttpError(400, "Book not found or not active");
         }
         if (dbBook.stockQuantity < reqItem.quantity) {
-          return res
-            .status(400)
-            .json({ msg: `Only ${dbBook.stockQuantity} books available` });
+         throw new HttpError(400, `Only ${dbBook.stockQuantity} books available`);
         }
 
         subtotal += dbBook.price * reqItem.quantity;
@@ -88,21 +92,27 @@ checkOutRouter.post("/checkout", async (req, res) => {
           },
         });
         if (updateResult.count === 0) {
-          throw new Error(`Only ${updateResult.count} books available.`);
+          throw new HttpError(400, "Not enough stock for one of the items");
         }
       }
       return { newOrder };
     });
 
-    res.status(201).json(result);
+    res.status(201).json({
+      message: 'Checkout successfully',
+      data: result.newOrder
+    });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ msg: "Something went wrong during checkout!" });
+   if (err instanceof HttpError) {
+    return res.status(err.status).json({ msg: err.message });
+  }
+  console.log(err);
+  res.status(500).json({ msg: "Something went wrong during checkout!" });
   }
 });
 
 //Getting client's orders
-checkOutRouter.get("/", async (req, res) => {
+checkOutRouter.get("/my-orders", async (req, res) => {
   try {
     const { id: userId } = res.locals.user;
     const myOrders = await prisma.order.findMany({
@@ -114,7 +124,10 @@ checkOutRouter.get("/", async (req, res) => {
         createdAt: "desc",
       },
     });
-    res.json(myOrders);
+    res.json({
+      message: "client's orders retrieved",
+      data: myOrders
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Something went wrong" });
@@ -123,7 +136,7 @@ checkOutRouter.get("/", async (req, res) => {
 
 
 //Getting client's specific order detail
-checkOutRouter.get("/:orderNumber", async(req ,res )=>{
+checkOutRouter.get("/my-orders/:orderNumber", async(req ,res )=>{
   try{
     const {orderNumber} = req.params;
     const {id: userId} = res.locals.user;
@@ -156,7 +169,10 @@ checkOutRouter.get("/:orderNumber", async(req ,res )=>{
       return res.status(404).json({msg: "Order not found"});
     }
     
-    res.json(order);
+    res.json({
+      message: `order ${orderNumber} retrieved`,
+      data: order
+    });
     console.log("Order Data:", order);
 
   }catch(err){

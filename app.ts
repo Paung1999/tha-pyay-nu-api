@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import userRouter from "./routes/v1/user";
 import bookRouter from "./routes/v1/books";
@@ -14,7 +15,8 @@ import { checkRole, auth } from "./middlewares/auth";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({origin:'http://localhost:5173', credentials: true}));
+app.use(cookieParser());
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/books", bookRouter);

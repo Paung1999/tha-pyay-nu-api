@@ -38,7 +38,14 @@ userRouter.get("/verify",auth, async(req ,res)=> {
                 role: true
             }
         })
-        res.json(user)
+        if(!user){
+
+            return res.status(401).json({ msg: "User no longer exists" });
+        }
+        return res.json({
+            message: 'Auth verify',
+            user: user
+        })
 
     }catch(er){
         console.log(er)
@@ -55,19 +62,42 @@ userRouter.post("/register", async(req , res )=> {
                 email: validatedData.email
             }
         });
+
         if(existingUser){
             return res.status(400).json({msg: "User already exists"})
         
         }
 
-        const user = await prisma.user.create({
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(validatedData.password,salt);
+
+        const newUser = await prisma.user.create({
             data: {
                 name: validatedData.name,
                 email: validatedData.email,
-                password: await bcrypt.hash(validatedData.password,10)
+                password: hashedPassword,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true
             }
         });
-        res.status(201).json(user);
+
+        const payload = {
+                id: newUser.id,
+                role: newUser.role
+        }
+
+        const token =  jwt.sign(payload, process.env.JWT_SECRET as string, {expiresIn: '1h'});
+
+
+        return res.status(201).json({
+            message: 'Registered successfully',
+            user: newUser,
+            token
+        });
 
     }catch(err){
         console.log(err)
@@ -79,7 +109,7 @@ userRouter.post("/login", async(req , res)=> {
     try{
         const validatedData = loginSchema.parse(req.body);
 
-        const user = await prisma.user.findUnique({
+        const registeredUser = await prisma.user.findUnique({
             where: {
                 email: validatedData.email
             },
@@ -93,19 +123,39 @@ userRouter.post("/login", async(req , res)=> {
 
         });
 
-        if(user){
-            if(await bcrypt.compare(validatedData.password, user.password)){
-                const token = jwt.sign({
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role
+        if(registeredUser){
+            const validUser = await bcrypt.compare(validatedData.password, registeredUser.password)
+            if(!validUser){
+                throw new Error('User not found')
+            }else{
+                const payload = {
+                    id: registeredUser.id,
+                    name: registeredUser.name,
+                    role: registeredUser.role
+                }
 
-                },process.env.JWT_SECRET as string, {
-                    expiresIn: "24hr"
-                
+                const token = await jwt.sign(payload, process.env.JWT_SECRET as string , {
+                        expiresIn: '1h'
                 });
-                return res.json({user, token})
+
+
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV == 'production',
+                    sameSite: 'lax',
+                    maxAge: 60 * 60 * 1000
+                });
+
+                const safeUser = {
+                    id: registeredUser.id,
+                    name: registeredUser.name,
+                    email: registeredUser.email,
+                    role: registeredUser.role
+                }
+                return res.status(200).json({
+                    message: 'Login successfully',
+                    user: safeUser
+                });
             }
         }
         return res.status(400).json({msg: "Invalid credentials"})
@@ -115,5 +165,12 @@ userRouter.post("/login", async(req , res)=> {
         res.status(500).json({msg: "Something went wrong!"})
     }
 });
+
+userRouter.post('/logout', async(req , res) => {
+    res.clearCookie('token');
+    res.json({
+        message:'logout successfully'
+    })
+})
 
 export default userRouter;

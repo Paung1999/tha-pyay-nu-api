@@ -8,8 +8,10 @@ type AuthPayload = {
 }
 
 export async function auth( req: express.Request ,res:express.Response , next:express.NextFunction){
-    const authorization = req.headers.authorization;
-    const token = authorization?.split(" ")[1];
+    // const authorization = req.headers.authorization;
+    // const token = authorization?.split(" ")[1];
+
+    const token = req.cookies?.token;
 
     if(!token){
         return res.status(401).json({msg: "Unauthorized"})
@@ -31,6 +33,7 @@ export async function auth( req: express.Request ,res:express.Response , next:ex
 export const checkRole = (requiredRole: string) => {
     return (req:express.Request , res:express.Response , next:express.NextFunction) => {
         const user = res.locals.user;
+        console.log("checkRole:", { required: requiredRole, tokenUser: user });
         if(!user || user.role !== requiredRole){
             return res.status(403).json({msg: "Forbidden"})
         }
