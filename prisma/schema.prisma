@@ -27,12 +27,6 @@ enum OrderStatus {
   REFUNDED
 }
 
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-}
-
 model User {
   id  Int @id @default(autoincrement())
   name String
@@ -105,7 +99,6 @@ model Order{
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orderItems OrderItem[]
-  payment Payment[]
 
 }
 
@@ -120,15 +113,4 @@ model OrderItem{
   titleSnapshot String
 }
 
-model Payment{
-  id Int @id @default(autoincrement())
-  order Order @relation(fields: [orderId], references: [id])
-  orderId Int @unique
-  status PaymentStatus @default(PENDING)
-  amount Int
-  provider String
-  transactionId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-}

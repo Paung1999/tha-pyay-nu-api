@@ -1,8 +1,6 @@
 import bcrypt from "bcrypt";
 import {prisma} from "../lib/prisma";
 import {Role} from "../generated/prisma/enums"
-import { title } from "node:process";
-import { auth } from "../middlewares/auth";
 
 const epicBooks = [
     {
@@ -93,7 +91,7 @@ async function main(){
 
                 }
             });
-            console.log(`Added book metadata: ${book.title}}`);
+            console.log(`Added book metadata: ${book.title}`);
         }
         let sellBook = await prisma.sell_Book.findFirst({
             where: {
@@ -111,7 +109,7 @@ async function main(){
                     isActive: true
                 }
             });
-            console.log(`Created store listing: ${sellBook.id}}`)
+            console.log(`Created store listing: ${sellBook.id}`)
         }
     }
 
