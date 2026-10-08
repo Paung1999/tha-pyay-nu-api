@@ -8,7 +8,7 @@
     "fresh": "prisma migrate reset --force && prisma db seed",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "tsx app.ts"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "pg": "^8.18.0",
+    "tsx": "^4.23.15",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -38,7 +39,6 @@
     "@types/node": "^25.3.0",
     "@types/pg": "^8.16.0",
     "prisma": "^7.4.0",
-    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
