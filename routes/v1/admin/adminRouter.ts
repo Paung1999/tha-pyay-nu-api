@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { title } from "node:process";
 import { Role } from "../../../generated/prisma/enums";
+import { loginCookieOptions } from "../../../lib/cookieOptions";
 
 
 
@@ -70,12 +71,7 @@ adminRouter.post("/login", async(req , res)=> {
           expiresIn: "2hr"
         });
 
-        res.cookie('token', token,{
-          httpOnly: true,
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-          secure: process.env.NODE_ENV === "production",
-          maxAge:  60 * 60 * 1000, 
-        });
+        res.cookie('token', token,loginCookieOptions);
 
         const safeUser = {
           id: user.id,
