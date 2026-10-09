@@ -14,8 +14,8 @@ import { checkRole, auth } from "./middlewares/auth";
 
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.CLIENT_URL,
-].filter((o): o is string => Boolean(o));
+  ...(process.env.CLIENT_URL?.split(",").map((s) => s.trim().replace(/\/+$/, "")) ?? []),
+];
 
 const app = express();
 app.use(express.json());
